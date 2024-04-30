@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot Demo</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    #chatbot-container {
+      width: 100%;
+      max-width: 600px;
+      min-height: 600px;
+      z-index: 9999;
+    }
+
+    #chatbot-messages {
+      max-width: 98%;
+      max-height: 500px;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 15px;
+      overflow-y: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+    }
+
+    #chatbot-form {
+      display: flex;
+      position: relative;
+      width: 98%;
+      justify-content: center;
+      margin: 10px auto;
+    }
+
+    #chatbot-input {
+      width: calc(100% - 10px);
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #000000;
+      border-radius: 4px;
+      color: black;
+    }
+
+    button[type="submit"] {
+      width: 80px;
+      padding: 10px;
+      background-color: #ff6138;
+      color: white;
+      border: none;
+      font-size: 1em;
+      border-radius: 4px;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Chatbot Container -->
+  <div id="chatbot-container">
+
+    <!-- Chatbot Messages -->
+    <div id="chatbot-messages"></div>
+  
+    <!-- Chatbot Input Form -->
+    <form id="chatbot-form">
+      <input id="chatbot-input" type="text" placeholder="Type your message..." />
+      <button type="submit">Send</button>
+    </form>
+  
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const chatbotForm = document.getElementById("chatbot-form");
+    const chatbotInput = document.getElementById("chatbot-input");
+    const chatbotMessages = document.getElementById("chatbot-messages");
+    const chatContainer = document.getElementById("chatbot-container");  // Updated from "chat-container"
+
+    // Define the conversationHistory array
+    const conversationHistory = [];
+  
+    // Display greeting message
+    addMessageToContainer("assistant", "What's up! I'm Polly the Policy Pal - your guide to decoding those confusing health insurance plans. I'll break it all down in plain English, no jargon allowed! Fire away with your questions and let's get this sorted.", chatbotMessages);
+  
+    async function sendMessageToAssistant(userMessage) {
+      conversationHistory.push({ role: "user", content: userMessage });
+      // Typing indicator
+      const typingIndicator = document.createElement("div");
+      typingIndicator.id = "ti";
+      typingIndicator.classList.add("typing-indicator");
+      const typingText = document.createElement("span");
+      typingText.textContent = "I'm typing";
+      typingIndicator.appendChild(typingText);
+  
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("span");
+        dot.classList.add("dot");
+        typingIndicator.appendChild(dot);
+      }
+  
+      chatContainer.appendChild(typingIndicator);
+      typingIndicator.style.display = "inline-flex"; // set the display property to make the indicator visible
+  
+      try {
+        const response = await axios.post(
+          "http://127.0.0.1:5000/chat", // Update the URL to your backend endpoint
+          { input: userMessage } // Send the user message as 'input' in the request body
+        );
+    
+        chatContainer.removeChild(typingIndicator);
+    
+        conversationHistory.push({ role: "assistant", content: response.data.response });
+    
+        return response.data.response;
+      } catch (error) {
+        console.error("Error while sending message to assistant:", error);
+        chatContainer.removeChild(typingIndicator);
+        return "Error: Unable to process your request.";
+      }
+    }
+  
+    function addMessageToContainer(role, message, container) {
+      const converter = new showdown.Converter();
+      const htmlContent = converter.makeHtml(message);
+  
+      const messageElement = document.createElement("div");
+  
+      if (role === "user") {
+        messageElement.classList.add("user-message");
+        messageElement.setAttribute('style', 'color: white;');
+      } else if (role === "assistant") {
+        messageElement.classList.add("assistant-message");
+        messageElement.setAttribute('style', 'color: black;');
+      }
+  
+      messageElement.innerHTML = htmlContent;
+      container.appendChild(messageElement);
+  
+      // Scroll the chat to the bottom
+      container.scrollTop = container.scrollHeight;
+    }
+  
+    chatbotForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+  
+      const userMessage = chatbotInput.value.trim();
+      if (userMessage === "") return;
+  
+      addMessageToContainer("user", userMessage, chatbotMessages);
+  
+      chatbotInput.value = "";
+  
+      try {
+        const assistantResponse = await sendMessageToAssistant(userMessage);
+        addMessageToContainer("assistant", assistantResponse, chatbotMessages);
+      } catch (error) {
+        console.error("Error in sendMessageToAssistant:", error);
+        addMessageToContainer("assistant", "Error: Unable to process your request.", chatbotMessages);
+      }
+    });
+  });
+  </script>
+</body>
+</html>

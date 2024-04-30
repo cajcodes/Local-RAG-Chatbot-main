@@ -1,0 +1,68 @@
+<div id="c" style="position:fixed;bottom:2%;right:2%;z-index:9999;">
+  <img id="t" src="static/polly.png" alt="Droid Hunter" style="width:140px;height:140px;border-radius:50%;cursor:pointer;display:block;">
+  <div id="tt" style="display:block;position:absolute;bottom:70%;left:50%;transform:translateX(-75%);background:#fff;padding:5px 10px;border-radius:10px;font-size:18px;color:#000;position:relative;">Ask Polly the Policy Pal</div>
+  <div id="m" style="display:none;width:80vw;max-width:600px;height:50vh;max-height:400px;background:#fff;border:1px solid #ccc;padding:30px;overflow-y:auto;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);position:relative;">
+    <div id="cl" style="position:absolute;top:10px;right:10px;width:25px;height:25px;background:#0071E3;border-radius:50%;text-align:center;line-height:25px;color:#FFF;font-size:12px;font-weight:bold;cursor:pointer;">X</div>
+    <div id="assistantMsg" style="color:#ffffff;">What's up! I'm Polly the Policy Pal - your guide to decoding those confusing health insurance plans. I'll break it all down in plain English, no jargon allowed! Fire away with your questions and let's get this sorted.</div>
+    <div id="ti" style="display:none;position:absolute;bottom:85px;left:5px;background:#e8f5e9;color:#000;font-size:18px;padding:5px 10px;border-radius:12px;">I'm typing...</div>
+  </div>
+  <form id="f" style="display:none;margin-top:20px;">
+    <input id="i" type="text" style="flex-grow:1;padding:12px;font-size:18px;border:1px solid #ccc;border-radius:6px;margin-right:10px;" placeholder="Type your message...">
+    <button type="submit" style="padding:12px 24px;background:#0071E3;color:#fff;border:none;font-size:14px;border-radius:4px;">Send</button>
+  </form>
+</div>
+<style>
+  #tt{position:absolute;top:-200px;left:50%;transform:translateX(-50%);background:#ffffff;padding:5px 10px;border-radius:10px;font-size:16px;color:#000000;position:relative;}
+  #tt::before{content:"";position:absolute;bottom:-5px;left:50%;transform:translateX(-50%) rotate(225deg);border-width:5px 5px 0 0;border-style:solid;border-color:#fff transparent transparent transparent;}
+  #assistantMsg{background-color: #454547;padding: 10px;border-radius: 10px;margin-bottom: 20px;}
+  .userMsg {background-color: #d6d6d6;padding: 10px;border-radius: 10px;margin-bottom: 20px;}
+  @media screen and (max-width:480px){#c{bottom:5%;right:5%;}#t{width:80px;height:80px;}#tt{bottom:300%;font-size:14px;padding:4px 8px;}#m{width:90vw;padding:4px 8px;}#m{width:90vw;max-width:400px;height:70vh;max-height:500px;padding:20px;}#am{font-size:16px;}#ti{bottom:75px;font-size:16px;}}
+</style>
+<script>
+  const t = document.getElementById('t');
+  const tt = document.getElementById('tt');
+  const cl = document.getElementById('cl');
+  const m = document.getElementById('m');
+  const f = document.getElementById('f');
+  const i = document.getElementById('i');
+  const chatContainer = document.getElementById('m');
+  const ti = document.getElementById('ti');
+
+  t.addEventListener('click', () => {
+    tt.style.display = 'none';
+    m.style.display = 'block';
+    f.style.display = 'flex';
+    t.style.display = 'none';
+  });
+
+  cl.addEventListener('click', () => {
+    m.style.display = 'none';
+    f.style.display = 'none';
+    t.style.display = 'block';
+    tt.style.display = 'block';
+  });
+
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userInput = i.value;
+    i.value = '';
+    chatContainer.innerHTML += `<div class="userMsg">${userInput}</div>`;
+    m.scrollTop = m.scrollHeight;
+    ti.style.display = 'block';
+
+    const response = await fetch('http://127.0.0.1:5000/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ input: userInput }),
+    });
+
+    const data = await response.json();
+    const assistantResponse = data.response;
+    chatContainer.innerHTML += `<div class="assistantMsg">${assistantResponse}</div>`;
+    m.scrollTop = m.scrollHeight;
+    ti.style.display = 'none';
+  });
+</script>
